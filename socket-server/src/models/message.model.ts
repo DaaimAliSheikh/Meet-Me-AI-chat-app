@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import { MessageType } from "../types";
 const messageSchema = new mongoose.Schema(
   {
     senderId: {
@@ -19,10 +19,13 @@ const messageSchema = new mongoose.Schema(
     imagePath: {
       type: String,
     },
-    seen: {
-      type: Boolean,
-      default: false,
-    },
+    seenBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
     edited: {
       type: Boolean,
       default: false,
@@ -32,6 +35,6 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Message = mongoose.model("Message", messageSchema);
+const Message = mongoose.model<MessageType>("Message", messageSchema);
 
 export default Message;

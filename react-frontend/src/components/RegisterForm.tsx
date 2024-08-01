@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
+import { FcGoogle } from "react-icons/fc";
+
 import {
   Form,
   FormControl,
@@ -20,12 +22,15 @@ import ErrorAlert from "./ErrorAlert";
 import SuccessAlert from "./SuccessAlert";
 
 import { LoaderCircle } from "lucide-react";
-import OAuthForm from "./OAuthForm";
 import { zodResolver } from "@hookform/resolvers/zod";
+import api from "@/lib/api";
+import { AxiosError } from "axios";
+import { useSearchParams } from "react-router-dom";
 
 const RegisterForm = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [searchParams, _setSearchParams] = useSearchParams();
 
   const form = useForm<RegisterFormType>({
     shouldUnregister: false,
@@ -37,9 +42,32 @@ const RegisterForm = () => {
     },
   });
 
+  useEffect(() => {
+    if (searchParams.get("credentials") === "true") {
+      setSuccessMsg(null);
+      setErrorMsg(
+        "Email already registered with Email and Password credentials"
+      );
+    }
+  }, []);
+
   const onSubmit = useCallback(async (data: RegisterFormType) => {
-    ////if email already exists with normal sign in error message
-    //else show email sent success message
+    const { username, email, password } = data;
+    try {
+      const response = await api.post("/auth/register", {
+        username,
+        email,
+        password,
+      });
+      setErrorMsg(null);
+      setSuccessMsg(response.data.message);
+    } catch (e) {
+      if (e instanceof AxiosError) {
+        setSuccessMsg(null);
+        setErrorMsg(e.response?.data.message || "Unable to register");
+        ///maybe case when passport sends own response not containing message
+      }
+    }
   }, []);
 
   return (
@@ -110,7 +138,17 @@ const RegisterForm = () => {
             </div>
           </form>
         </Form>
-        <OAuthForm />
+        <Button
+          onClick={() =>
+            (window.location.href = "http://localhost:3000/api/auth/google")
+          }
+          className="w-full mt-2"
+          variant={"secondary"}
+        >
+          <FcGoogle className=" text-2xl mr-2 " />
+
+          <p>Sign in with Google</p>
+        </Button>
       </CardContent>
     </Card>
   );

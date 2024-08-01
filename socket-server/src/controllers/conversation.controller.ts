@@ -10,14 +10,23 @@ export const getConversation = async (req: Request, res: Response) => {
 
     const conversation = await Conversation.findOne({
       _id: conversationId,
+      $or: [
+        {
+          admins: { $elemMatch: { $eq: req.user?._id } },
+        },
+        { participants: { $elemMatch: { $eq: req.user?._id } } },
+      ],
     })
       .populate({
         path: "messages",
-        select: "-conversationId -updatedAt",
         populate: { path: "senderId", select: "username _id image" },
       })
       .populate({ path: "participants", select: "username _id image" })
       .populate({ path: "admins", select: "username _id image" });
+
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
 
     res.status(200).json(conversation);
   } catch (error) {
@@ -28,8 +37,9 @@ export const getConversation = async (req: Request, res: Response) => {
 
 export const createConversation = async (req: Request, res: Response) => {
   try {
+    //name, description, type, image
     const conversation = await Conversation.create(req.body);
-    ///admin should be the creator of the conversation by default
+    ///creator should be the admin of the conversation by default
 
     io.to(String(conversation._id)).emit("new-conversation", {
       conversationId: conversation._id,
@@ -47,7 +57,14 @@ export const createConversation = async (req: Request, res: Response) => {
 export const deleteConversation = async (req: Request, res: Response) => {
   const { conversationId } = req.params;
   try {
-    const conversation = await Conversation.deleteOne({ _id: conversationId });
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      admins: { $elemMatch: { $eq: req.user?._id } },
+    });
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+    await Conversation.deleteOne({ _id: conversationId });
     await Message.deleteMany({ conversationId });
     ///admin should be the creator of the conversation by default
 
@@ -64,12 +81,24 @@ export const deleteConversation = async (req: Request, res: Response) => {
 };
 
 export const updateConversation = async (req: Request, res: Response) => {
+  ///name, desc, image, CANNOT UPDATE TYPE
   const { conversationId } = req.params;
+  const { name, description, image } = req.body;
   try {
-    const conversation = await Conversation.updateOne(
-      { conversationId },
-      req.body
-    );
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      admins: { $elemMatch: { $eq: req.user?._id } },
+    });
+
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    conversation.name = name;
+    conversation.description = description;
+    conversation.image = image;
+
+    await conversation.save();
 
     io.to(conversationId).emit("conversation-updated", req.body);
 
@@ -85,9 +114,12 @@ export const updateAdmins = async (req: Request, res: Response) => {
   const { admins }: { admins: mongoose.Schema.Types.ObjectId[] } = req.body;
   try {
     const conversation = await Conversation.updateOne(
-      { conversationId },
+      { _id: conversationId, admins: { $elemMatch: { $eq: req.user?._id } } },
       { admins }
     );
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
 
     io.to(conversationId).emit("admins-updated", admins);
 
@@ -104,9 +136,13 @@ export const updateParticipants = async (req: Request, res: Response) => {
     req.body;
   try {
     const conversation = await Conversation.updateOne(
-      { conversationId },
+      { _id: conversationId, admins: { $elemMatch: { $eq: req.user?._id } } },
+
       { participants }
     );
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
 
     io.to(conversationId).emit("participants-updated", participants);
 

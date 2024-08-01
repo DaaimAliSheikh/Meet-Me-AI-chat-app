@@ -5,6 +5,7 @@ import {
   logout,
   register,
   verifyEmail,
+  loginSuccess,
 } from "../controllers/auth.controller";
 import passport from "passport";
 
@@ -13,6 +14,12 @@ const router = express.Router();
 router.post("/register", register);
 
 router.post("/login", localLogin);
+router.get(
+  "/login/success",
+  passport.authenticate("jwt", { session: false }),
+
+  loginSuccess
+);
 
 router.get(
   "/google",
@@ -29,6 +36,6 @@ router.post(
   logout
 );
 
-router.get("/verifyemail", verifyEmail);
+router.get("/verifyemail/:token", verifyEmail);
 
 export default router;

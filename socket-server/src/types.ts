@@ -18,7 +18,7 @@ export interface MessageType {
   conversationId: mongoose.Types.ObjectId;
   message: string;
   imagePath: string;
-  seen: boolean;
+  seenBy: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }

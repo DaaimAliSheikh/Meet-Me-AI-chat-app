@@ -8,12 +8,9 @@ export const sendMessage = async (req: Request, res: Response) => {
     const {
       message,
       conversationId,
-      senderId,
     }: {
       message: string;
-      messageId: string;
       conversationId: string;
-      senderId: string;
     } = req.body;
 
     let conversation = await Conversation.findOne({
@@ -25,7 +22,7 @@ export const sendMessage = async (req: Request, res: Response) => {
     }
 
     const newMessage = new Message({
-      senderId,
+      senderId: req.user?._id,
       conversationId,
       message,
     });
@@ -36,7 +33,10 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     await Promise.all([conversation.save(), newMessage.save()]);
     ///broadcast to others if everything succeeds
-    io.to(conversationId).emit("message-receive", { senderId, message });
+    io.to(conversationId).emit("message-receive", {
+      senderId: req.user?._id,
+      message,
+    });
     return res.status(201).json(newMessage);
   } catch (error) {
     console.log("Error sending Message: ", error);
@@ -46,14 +46,19 @@ export const sendMessage = async (req: Request, res: Response) => {
   }
 };
 
-export const deletedMessage = async (req: Request, res: Response) => {
+export const deleteMessage = async (req: Request, res: Response) => {
   const { messageId } = req.params;
   try {
-    const deletedMessage = await Message.findByIdAndDelete(messageId);
+    const deletedMessage = await Message.findOne({
+      _id: messageId,
+      senderId: req.user?._id,
+    });
 
     if (!deletedMessage) {
       throw new Error("Message not found");
     }
+
+    await Message.findByIdAndDelete(messageId);
     const conversationId = deletedMessage.conversationId;
 
     const conversation = await Conversation.findById(conversationId);
@@ -84,15 +89,24 @@ export const deletedMessage = async (req: Request, res: Response) => {
 
 export const updateMessage = async (req: Request, res: Response) => {
   const { messageId } = req.params;
-  const { conversationId } = req.body;
+  const { message, imagePath, conversationId } = req.body;
   try {
+    const existingMessage = await Message.findOne({
+      _id: messageId,
+      senderId: req.user?._id,
+    });
+    if (!existingMessage) {
+      throw new Error("Message not found");
+    }
+
     const updatedMessage = await Message.findByIdAndUpdate(
       messageId,
-      { message: req.body.message },
+      { message, imagePath, edited: true },
       {
         new: true,
       }
     );
+
     io.to(conversationId).emit("message-updated", updatedMessage);
     res.status(200).json(updatedMessage);
   } catch (error) {
@@ -139,4 +153,32 @@ export const generateGroqResponse = async (req: Request, res: Response) => {
   await Promise.all([conversation.save(), newMessage.save()]);
 
   res.json(message);
+};
+
+export const seenMessages = async (req: Request, res: Response) => {
+  const { conversationId } = req.params;
+  try {
+    await Message.updateMany(
+      {
+        seenBy: { $not: { $elemMatch: { $eq: req.user?._id } } },
+        conversationId,
+      },
+      { $push: { seenBy: req.user?._id } }
+    );
+
+    const messageIds = await Message.find().select("_id");
+
+    io.to(conversationId).emit("seen", {
+      ///seenBy would be a SET(for each message) on the frontend, just push this id in the set, stays unique
+      //attach seen listener on frontend before making this http request
+      userId: req.user?._id,
+    });
+
+    res.status(200).json({ message: "Messages seen successfully" });
+  } catch (error) {
+    console.log("Error updating Message: ", error);
+    return res
+      .status(500)
+      .json({ error: "Internal server error, could not update message" });
+  }
 };

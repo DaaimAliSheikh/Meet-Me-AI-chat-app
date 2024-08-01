@@ -15,11 +15,8 @@ export const localStrategy = new PassportLocalStrategy(
     session: false, ///important for JWT
   },
   async (email, password, done) => {
-    // const result = LoginFormSchema.safeParse({ email, password });
-    const result = {
-      data: { email, password },
-      error: null,
-    };
+    const result = LoginFormSchema.safeParse({ email, password });
+
     if (result.error)
       return done(null, false, { message: "Invalid credentials" });
     try {
@@ -86,10 +83,7 @@ export const googleStrategy = new GoogleStrategy(
         });
         return done(null, newUser);
       } else if (user.provider !== "google") {
-        return done(null, false, {
-          message:
-            "Email already registered with Email and Password credentials",
-        });
+        return done(null, false);
       } else {
         return done(null, user);
       }
