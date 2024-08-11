@@ -15,6 +15,6 @@ router.post("/ai/:conversationId", generateGroqResponse);
 router.put("/:messageId", updateMessage);
 router.put("/seen-all/:conversationId", seenAllMessages);
 router.put("/seen/:messageId", seenMessage);
-router.delete("/:messageId", deleteMessage);
+router.patch("/:messageId", deleteMessage);
 
 export default router;

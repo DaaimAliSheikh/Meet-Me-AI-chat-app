@@ -297,6 +297,45 @@ const Chat = ({
             };
           });
       });
+
+      socket?.on(
+        "message-delete",
+        ({ senderId, messageId }: { senderId: string; messageId: string }) => {
+          if (senderId !== userId)
+            queryClient.setQueryData([conversation?._id], (oldData: any) => {
+              return {
+                ...oldData,
+                messages: oldData?.messages.filter(
+                  (message: MessageType) => message._id !== messageId
+                ),
+              };
+            });
+        }
+      );
+
+      socket?.on(
+        "message-updated",
+        ({
+          updatedMessage,
+          senderId,
+        }: {
+          updatedMessage: MessageType;
+          senderId: string;
+        }) => {
+          if (senderId !== userId)
+            queryClient.setQueryData([conversation?._id], (oldData: any) => {
+              return {
+                ...oldData,
+                messages: oldData?.messages.map((message: MessageType) => {
+                  if (message._id === updatedMessage._id) {
+                    return updatedMessage;
+                  }
+                  return message;
+                }),
+              };
+            });
+        }
+      );
       ///seen all messages of this conversation, emits seen-all event which is handled above
       await api.put(`/messages/seen-all/${currentConvo._id}`);
     };
@@ -307,7 +346,8 @@ const Chat = ({
       socket?.off("message-receive");
       socket?.off("seen");
       socket?.off("seen-all");
-      socket?.off("message-receive");
+      socket?.off("message-delete");
+      socket?.off("message-updated");
       if (currentConvo) socket?.emit("leave", currentConvo._id);
     };
   }, [conversation, currentConvo]);

@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import Conversation from "../models/conversation.model";
 import Message from "../models/message.model";
 import { io } from "../socket";
+import { v2 as cloudinary } from "cloudinary";
+
 import streamFromGroq from "../groq";
 export const sendMessage = async (req: Request, res: Response) => {
   try {
@@ -82,14 +84,14 @@ export const deleteMessage = async (req: Request, res: Response) => {
 
     await conversation.save();
 
-
-    if(public_id)await cloudinary.uploader.destroy(public_id)
-
+    console.log("public_id: ", public_id);
+    if (public_id) await cloudinary.uploader.destroy(public_id);
 
     ///broadcast to others if everything succeeds
 
-    io.to(String(conversationId)).emit("message-delete", {
+    io.to(conversationId).emit("message-delete", {
       messageId,
+      senderId: req.user?._id,
     });
     return res.status(201).json(deletedMessage);
   } catch (error) {
@@ -103,7 +105,7 @@ export const deleteMessage = async (req: Request, res: Response) => {
 
 export const updateMessage = async (req: Request, res: Response) => {
   const { messageId } = req.params;
-  const { message, imagePath, conversationId } = req.body;
+  const { message, conversationId } = req.body;
   try {
     const existingMessage = await Message.findOne({
       _id: messageId,
@@ -115,13 +117,13 @@ export const updateMessage = async (req: Request, res: Response) => {
 
     const updatedMessage = await Message.findByIdAndUpdate(
       messageId,
-      { message, imagePath, edited: true },
+      { message, edited: true },
       {
         new: true,
       }
     );
 
-    io.to(conversationId).emit("message-updated", updatedMessage);
+    io.to(conversationId).emit("message-updated", {updatedMessage, senderId: req.user?._id,});
     res.status(200).json(updatedMessage);
   } catch (error) {
     console.log("Error updating Message: ", error);

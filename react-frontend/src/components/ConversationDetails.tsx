@@ -77,7 +77,7 @@ const ConversationDetails = ({
         ? queryClient.invalidateQueries({ queryKey: ["groups"] })
         : queryClient.invalidateQueries({ queryKey: ["users"] });
 
-      queryClient.invalidateQueries({ queryKey: [conversation?._id] });
+      setConversation(null);
       toast({
         title: "Conversation deleted successfully",
       });
@@ -377,12 +377,13 @@ const ConversationDetails = ({
         type="button"
         className="flex gap-2 my-2 w-[95%] md:w-full ml-1"
         onClick={async () => {
-          if (isAdmin)
+          if (isAdmin) {
+            console.log("deleting", currentConvo?._id);
             deleteConversation({
               conversationId: currentConvo?._id,
               public_id: currentConvo?.public_id || "",
             });
-          else {
+          } else {
             await api.put(`/conversations/leave/${currentConvo?._id}`);
             setConversation(null);
 

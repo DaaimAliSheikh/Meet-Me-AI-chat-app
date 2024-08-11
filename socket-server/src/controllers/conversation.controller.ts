@@ -108,6 +108,7 @@ export const deleteConversation = async (req: Request, res: Response) => {
       throw new Error("Conversation not found");
     }
     if (public_id) await cloudinary.uploader.destroy(public_id);
+    console.log(conversationId);
     await Conversation.deleteOne({ _id: conversationId });
     (await Message.find({ conversationId }).select("public_id")).forEach(
       async (message) => {
