@@ -1,10 +1,11 @@
-import LogoutButton from "@/components/LogoutButton";
+import ChatList from "@/components/ChatList";
+import ConversationBox from "../components/ConversationBox";
 
 const Home = () => {
   return (
-    <div>
-      Home
-      <LogoutButton />
+    <div className="flex-grow overflow-hidden flex gap-2 items-stretch  ">
+      <ChatList />
+      <ConversationBox />
     </div>
   );
 };

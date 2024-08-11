@@ -21,7 +21,7 @@ const LoginPage = () => {
     })();
   }, []);
   return (
-    <div className="p-1 flex flex-col max-w-[35rem] mx-auto mt-6">
+    <div className="p-1 flex w-full flex-col max-w-[35rem] mx-auto mt-6">
       <h2 className="text-xl p-1 py-2">Login</h2>
       <LoginForm />
       <Link

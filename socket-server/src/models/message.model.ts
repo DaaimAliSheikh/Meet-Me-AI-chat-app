@@ -3,25 +3,27 @@ import { MessageType } from "../types";
 const messageSchema = new mongoose.Schema(
   {
     senderId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "User",
       required: true,
     },
     conversationId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: String,
       ref: "Conversation",
       required: true,
     },
     message: {
       type: String,
-      required: true,
     },
-    imagePath: {
+    image: {
+      type: String,
+    },
+    public_id: {
       type: String,
     },
     seenBy: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: "User",
         default: [],
       },

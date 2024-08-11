@@ -1,13 +1,9 @@
 import express from "express";
 import passport from "passport";
-import { getUsersForSidebar } from "../controllers/users.controller";
+import { getUsers } from "../controllers/users.controller";
 
 const router = express.Router();
 
-router.get(
-  "/",
-  passport.authenticate("jwt", { session: false }),
-  getUsersForSidebar
-);
+router.get("/", passport.authenticate("jwt", { session: false }), getUsers);
 
 export default router;

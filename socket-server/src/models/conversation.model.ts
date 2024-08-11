@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
+import { ConversationType } from "../types";
 
+///personal convo has no participants, only admins
 const conversationSchema = new mongoose.Schema(
   {
     name: {
@@ -7,6 +9,9 @@ const conversationSchema = new mongoose.Schema(
       required: true,
     },
     image: {
+      type: String,
+    },
+    public_id: {
       type: String,
     },
     description: {
@@ -20,21 +25,21 @@ const conversationSchema = new mongoose.Schema(
     },
     admins: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: "User",
         default: [],
       },
     ],
     participants: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: "User",
         default: [],
       },
     ],
     messages: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: String,
         ref: "Message",
         default: [],
       },
@@ -43,6 +48,9 @@ const conversationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Conversation = mongoose.model("Conversation", conversationSchema);
+const Conversation = mongoose.model<ConversationType>(
+  "Conversation",
+  conversationSchema
+);
 
 export default Conversation;

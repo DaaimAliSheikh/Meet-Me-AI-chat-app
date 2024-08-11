@@ -4,7 +4,8 @@ import {
   generateGroqResponse,
   sendMessage,
   updateMessage,
-  seenMessages
+  seenAllMessages,
+  seenMessage,
 } from "../controllers/message.controller";
 
 const router = express.Router();
@@ -12,7 +13,8 @@ const router = express.Router();
 router.post("/send", sendMessage);
 router.post("/ai/:conversationId", generateGroqResponse);
 router.put("/:messageId", updateMessage);
-router.put("/seen/:conversationId", seenMessages);
+router.put("/seen-all/:conversationId", seenAllMessages);
+router.put("/seen/:messageId", seenMessage);
 router.delete("/:messageId", deleteMessage);
 
 export default router;

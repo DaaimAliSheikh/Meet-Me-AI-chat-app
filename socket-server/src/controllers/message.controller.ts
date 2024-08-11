@@ -8,9 +8,13 @@ export const sendMessage = async (req: Request, res: Response) => {
     const {
       message,
       conversationId,
+      image,
+      public_id,
     }: {
       message: string;
       conversationId: string;
+      image: string;
+      public_id: string;
     } = req.body;
 
     let conversation = await Conversation.findOne({
@@ -25,6 +29,9 @@ export const sendMessage = async (req: Request, res: Response) => {
       senderId: req.user?._id,
       conversationId,
       message,
+      image: image || "",
+      public_id: public_id || "",
+      seenBy: [req.user?._id],
     });
 
     if (newMessage) {
@@ -35,8 +42,9 @@ export const sendMessage = async (req: Request, res: Response) => {
     ///broadcast to others if everything succeeds
     io.to(conversationId).emit("message-receive", {
       senderId: req.user?._id,
-      message,
+      newMessage,
     });
+
     return res.status(201).json(newMessage);
   } catch (error) {
     console.log("Error sending Message: ", error);
@@ -48,6 +56,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 
 export const deleteMessage = async (req: Request, res: Response) => {
   const { messageId } = req.params;
+  const { public_id } = req.body;
   try {
     const deletedMessage = await Message.findOne({
       _id: messageId,
@@ -68,10 +77,15 @@ export const deleteMessage = async (req: Request, res: Response) => {
     }
 
     conversation.messages = conversation.messages.filter(
-      (msgId) => !msgId.equals(messageId)
+      (msgId) => msgId !== messageId
     );
 
     await conversation.save();
+
+
+    if(public_id)await cloudinary.uploader.destroy(public_id)
+
+
     ///broadcast to others if everything succeeds
 
     io.to(String(conversationId)).emit("message-delete", {
@@ -155,25 +169,50 @@ export const generateGroqResponse = async (req: Request, res: Response) => {
   res.json(message);
 };
 
-export const seenMessages = async (req: Request, res: Response) => {
+///this request is made on conversation select to see all unseen messages that piled up while the conversation was not selected
+export const seenAllMessages = async (req: Request, res: Response) => {
   const { conversationId } = req.params;
   try {
     await Message.updateMany(
       {
-        seenBy: { $not: { $elemMatch: { $eq: req.user?._id } } },
+        seenBy: { $ne: req.user?._id },
         conversationId,
       },
       { $push: { seenBy: req.user?._id } }
     );
 
-    const messageIds = await Message.find().select("_id");
-
-    io.to(conversationId).emit("seen", {
-      ///seenBy would be a SET(for each message) on the frontend, just push this id in the set, stays unique
-      //attach seen listener on frontend before making this http request
-      userId: req.user?._id,
+    io.to(conversationId).emit("seen-all", {
+      ///will push this id in to seenby of each message, if the id doesnt already exists in it
+      //attach listener to Chat
+      seenUserId: req.user?._id,
     });
 
+    res.status(200).json({ message: "Messages seen successfully" });
+  } catch (error) {
+    console.log("Error updating Message: ", error);
+    return res
+      .status(500)
+      .json({ error: "Internal server error, could not update message" });
+  }
+};
+
+///this request is made by every client after they get message-receive event
+export const seenMessage = async (req: Request, res: Response) => {
+  const { messageId } = req.params;
+  const { conversationId } = req.body;
+  try {
+    await Message.updateOne(
+      {
+        _id: messageId,
+      },
+      { $push: { seenBy: req.user?._id } }
+    );
+
+    io.to(conversationId).emit("seen", {
+      ///push userId to seenBy of the message with messageId
+      messageId,
+      seenUserId: req.user?._id,
+    });
     res.status(200).json({ message: "Messages seen successfully" });
   } catch (error) {
     console.log("Error updating Message: ", error);

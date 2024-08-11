@@ -1,7 +1,5 @@
-import mongoose from "mongoose";
-
 export interface UserType {
-  _id: mongoose.Types.ObjectId;
+  _id: string;
   username: string;
   email: string;
   emailVerified: boolean;
@@ -13,20 +11,27 @@ export interface UserType {
 }
 
 export interface MessageType {
-  _id: mongoose.Types.ObjectId;
-  senderId: mongoose.Types.ObjectId;
-  conversationId: mongoose.Types.ObjectId;
+  _id: string;
+  senderId: string;
+  conversationId: string;
   message: string;
-  imagePath: string;
-  seenBy: mongoose.Types.ObjectId[];
+  image: string;
+  public_id: string;
+  seenBy: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type ConversationType = {
-  _id: mongoose.Types.ObjectId;
-  participants: mongoose.Types.ObjectId[];
-  messages: mongoose.Types.ObjectId[];
+  _id: string;
+  name: string;
+  description: string;
+  image?: string;
+  public_id?: string;
+  type: string;
+  participants: string[];
+  admins: string[];
+  messages: string[];
   createdAt: Date;
   updatedAt: Date;
 };

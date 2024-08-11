@@ -7,7 +7,7 @@ export const generateJWT = (user: UserType) => {
       id: user._id,
     },
     process.env.JWT_SECRET!,
-    { expiresIn: "7d" }
+    { expiresIn: "7days" }
   );
   return token;
 };

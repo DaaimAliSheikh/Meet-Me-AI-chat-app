@@ -16,8 +16,9 @@ export const googleLogin = async (req: Request, res: Response) => {
     },
     (err: Error, user: UserType) => {
       if (err) return res.redirect(process.env.CLIENT_LOGIN_URL!);
-      if (!user)
+      if (!user) {
         return res.redirect(process.env.CLIENT_LOGIN_URL + "?credentials=true");
+      }
       const token = generateJWT(user);
       res.cookie(process.env.COOKIE_NAME!, token, {
         httpOnly: true,

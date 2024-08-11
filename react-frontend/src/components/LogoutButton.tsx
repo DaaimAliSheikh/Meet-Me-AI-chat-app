@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
 import { useUserStore } from "@/store";
+import { Power } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const LogoutButton = () => {
@@ -8,6 +9,7 @@ const LogoutButton = () => {
   const setUser = useUserStore((state) => state.setUser);
   return (
     <Button
+      size={"sm"}
       onClick={async () => {
         try {
           await api.post("/auth/logout"); ///delete http only cookie
@@ -20,6 +22,7 @@ const LogoutButton = () => {
       }}
     >
       Logout
+      <Power className="ml-2" size={16} />
     </Button>
   );
 };

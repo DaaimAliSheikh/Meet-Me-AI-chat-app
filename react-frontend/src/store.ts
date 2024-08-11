@@ -1,29 +1,32 @@
-import { io, Socket } from "socket.io-client";
 import { create } from "zustand";
-
-interface UserType {
-  _id: string;
-  username: string;
-  email: string;
-  emailVerified: boolean;
-  image: string;
-  provider: string;
-  updatedAt: Date;
-  createdAt: Date;
-}
-
-interface IUserStore {
-  user: UserType | null;
-  setUser: (newUser: UserType | null) => void;
-}
+import {
+  IConversationStore,
+  IUserStore,
+  UserType,
+  ISocketStore,
+} from "./types";
+import api from "./lib/api";
+import { Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 
 const API_URL = "http://localhost:3000";
 
-const user = (localStorage.getItem("chat-user") as string)
-  ? JSON.parse(localStorage.getItem("chat-user") as string)
-  : null;
+let user: UserType | null = null;
+let socket: Socket | null = null;
 
-const socket = io(API_URL);
+socket = io(API_URL);
+
+(async () => {
+  try {
+    await api.get("/auth/login/success");
+    user =
+      (JSON.parse(localStorage.getItem("chat-user") as string) as UserType) ||
+      null;
+  } catch {
+    user = null;
+    socket = null;
+  }
+})();
 
 export const useUserStore = create<IUserStore>((set) => {
   return {
@@ -32,6 +35,26 @@ export const useUserStore = create<IUserStore>((set) => {
   };
 });
 
-export const useSocketStore = create<Socket | null>((_set) => {
-  return socket;
+export const useSocketStore = create<ISocketStore>((set) => {
+  return {
+    onlineUsers: [],
+    socket,
+    setOnlineUsers: (users: string[]) => set({ onlineUsers: users }),
+    ///set socket in app.tsx after validating user
+  };
+});
+
+export const useConvesationStore = create<IConversationStore>((set) => {
+  return {
+    conversation: null,
+
+    setConversation: (
+      conversation: {
+        type: string | null;
+        _id: string | null;
+        name: string | null;
+        image: string | null;
+      } | null
+    ) => set({ conversation }),
+  };
 });

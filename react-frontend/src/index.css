@@ -62,9 +62,9 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border list-none  no-underline scroll-smooth;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-hidden;
   }
 }
