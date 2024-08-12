@@ -97,7 +97,7 @@ const CreateGroupForm = ({
     try {
       let image = "";
       let public_id = "";
-      if (data.image) {
+      if (data.image && data.image.length > 0) {
         ///data.image is undefined(not empty array) in case of no image
         ///upload image
         const signResponse = await api.get("/cloudinary");

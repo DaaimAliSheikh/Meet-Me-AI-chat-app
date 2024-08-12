@@ -1,7 +1,7 @@
 import api from "@/lib/api";
 import { useEffect, useState } from "react";
 
-import { ChatListUser } from "@/types";
+import { ChatListUser, ConversationType } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "./ui/card";
 import generateInitials from "@/lib/generateInitials";
+import { toast } from "./ui/use-toast";
 
 const UsersList = () => {
   const [users, setUsers] = useState<ChatListUser[]>([]);
@@ -34,18 +35,37 @@ const UsersList = () => {
         if (user_id != userId) {
           queryClient.invalidateQueries({ queryKey: ["groups"] });
           queryClient.invalidateQueries({ queryKey: ["users"] });
-
           queryClient.invalidateQueries({ queryKey: [conversation?._id] });
-          if (![...admins, ...participants].includes(userId))
-            if (conversationId == conversation?._id) setShowConvo(false); ///to not close other peoples chats who are not affiliated with the changing chat
+
+          const currentConvo: ConversationType | undefined =
+            queryClient.getQueryData([conversation?._id]);
+          if (conversationId == currentConvo?._id) {
+            ///to not interfere other peoples chats who are not affiliated with the changing chat as this event is sent to all convos
+            if (![...admins, ...participants].includes(userId)) {
+              setShowConvo(false);
+              toast({
+                title: "Conversation was deleted",
+              });
+              return;
+            }
+            toast({
+              title: "Conversation was updated",
+            });
+          }
         }
       }
     );
-    socket?.on("conversation-refetch", (user_id) => {
+    socket?.on("conversation-refetch", (user_id, conversationId) => {
       if (user_id != userId) {
         queryClient.invalidateQueries({ queryKey: ["groups"] });
         queryClient.invalidateQueries({ queryKey: ["users"] });
         queryClient.invalidateQueries({ queryKey: [conversation?._id] });
+        const currentConvo: ConversationType | undefined =
+          queryClient.getQueryData([conversation?._id]);
+        if (conversationId == currentConvo?._id)
+          toast({
+            title: "Conversation was updated",
+          });
       }
     });
     socket?.on("conversation-delete", (user_id, conversationId) => {
@@ -53,7 +73,13 @@ const UsersList = () => {
         queryClient.invalidateQueries({ queryKey: ["groups"] });
         queryClient.invalidateQueries({ queryKey: ["users"] });
         queryClient.invalidateQueries({ queryKey: [conversation?._id] });
-        if (conversationId == conversation?._id) setShowConvo(false);
+        const currentConvo: ConversationType | undefined =
+          queryClient.getQueryData([conversation?._id]);
+        if (conversationId == currentConvo?._id) setShowConvo(false);
+
+        toast({
+          title: "Conversation was deleted",
+        });
       }
     });
 

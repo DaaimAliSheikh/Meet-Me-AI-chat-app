@@ -27,7 +27,6 @@ import { ScrollArea } from "./ui/scroll-area";
 import { useForm } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
 import { ConversationType, MessageType } from "@/types";
-import { useInView } from "react-intersection-observer";
 
 const Chat = ({
   setShowConvo,
@@ -43,7 +42,6 @@ const Chat = ({
   const [open, setOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
-  const [ref, inView] = useInView();
 
   const queryClient = useQueryClient();
   const socket = useSocketStore((state) => state.socket);
@@ -171,6 +169,7 @@ const Chat = ({
 
     setImagePreview(false);
     form.setFocus("message");
+
     ///if already scrolled to bottom then scroll more when message received
   };
 
@@ -189,8 +188,7 @@ const Chat = ({
         }
       } catch (e) {
         setConversation(null);
-
-        throw new Error("Conversation not found");
+        throw new Error("conversation not found");
       }
 
       try {
@@ -202,7 +200,7 @@ const Chat = ({
         }
       } catch (error: any) {
         ///create new conversation if doesnt exist
-        if (error.response.status === 400) {
+        if (error?.response?.status === 404) {
           const result = await api.post("/conversations/create", {
             name: "personal",
             type: "personal",
@@ -213,13 +211,10 @@ const Chat = ({
           });
           return result.data;
         }
+        throw new Error(error?.message);
       }
     },
   });
-  useEffect(() => {
-    if (elementRef.current && inView) elementRef.current.scrollIntoView(false);
-    ///if already scrolled to bottom then scroll more when message received
-  }, [currentConvo]);
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -361,8 +356,6 @@ const Chat = ({
   }, [isFetching]);
 
   useEffect(() => {
-    console.log("chnaged");
-
     setImagePreview(false);
     form.setValue("image", [], { shouldValidate: true });
     form.setValue("message", "", { shouldValidate: true });
@@ -450,7 +443,7 @@ const Chat = ({
           )}
 
           {currentConvo && (
-            <MessageList ref={ref} currentConvo={currentConvo} />
+            <MessageList elementRef={elementRef} currentConvo={currentConvo} />
           )}
         </div>
       </ScrollArea>

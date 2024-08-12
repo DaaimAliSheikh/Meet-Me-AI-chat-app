@@ -37,7 +37,7 @@ export const getPersonalConversation = async (req: Request, res: Response) => {
       .populate({ path: "messages" });
 
     if (!conversation) {
-      return res.status(400).json({ message: "Conversation not found" });
+      return res.status(404).json({ message: "Conversation not found" });
     }
 
     res.status(200).json(conversation);
@@ -67,7 +67,7 @@ export const getConversationById = async (req: Request, res: Response) => {
       .populate({ path: "admins", select: "_id username image" });
 
     if (!conversation) {
-      return res.status(400).json({ message: "Conversation not found" });
+      return res.status(404).json({ message: "Conversation not found" });
     }
     return res.status(200).json(conversation);
   } catch (error) {
@@ -88,7 +88,7 @@ export const createConversation = async (req: Request, res: Response) => {
     conversation.populate({ path: "admins", select: "_id username image" });
     conversation.populate({ path: "messages" });
     ///creator should be in the admins of the conversation by default
-    io.emit("conversation-refetch", req.user?._id); ///invalidate queries on frontend
+    io.emit("conversation-refetch", req.user?._id, conversation._id); ///invalidate queries on frontend
     res.status(200).json(conversation);
   } catch (error) {
     console.log("Error in createConversation controller: ", error);
@@ -108,7 +108,6 @@ export const deleteConversation = async (req: Request, res: Response) => {
       throw new Error("Conversation not found");
     }
     if (public_id) await cloudinary.uploader.destroy(public_id);
-    console.log(conversationId);
     await Conversation.deleteOne({ _id: conversationId });
     (await Message.find({ conversationId }).select("public_id")).forEach(
       async (message) => {
@@ -183,7 +182,7 @@ export const leaveConversation = async (req: Request, res: Response) => {
     if (!conversation) {
       throw new Error("Conversation not found");
     }
-    io.emit("conversation-refetch", req.user?._id); ///invalidate queries on frontend
+    io.emit("conversation-refetch", req.user?._id, conversationId); ///invalidate queries on frontend
 
     res.status(200).json(conversation);
   } catch (error) {

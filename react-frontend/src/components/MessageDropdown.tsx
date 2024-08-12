@@ -17,8 +17,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
+ 
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import api from "@/lib/api";
@@ -87,12 +86,6 @@ const MessageDropdown = ({
           <ChevronDown size={15} />
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          {message.edited && (
-            <>
-              <DropdownMenuLabel>Message has been edited</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-            </>
-          )}
           <DropdownMenuItem
             className="hover:cursor-pointer my-1 hover:opacity-75 bg-destructive rounded-md"
             onClick={() => {

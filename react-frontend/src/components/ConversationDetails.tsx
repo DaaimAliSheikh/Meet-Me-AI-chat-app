@@ -378,7 +378,6 @@ const ConversationDetails = ({
         className="flex gap-2 my-2 w-[95%] md:w-full ml-1"
         onClick={async () => {
           if (isAdmin) {
-            console.log("deleting", currentConvo?._id);
             deleteConversation({
               conversationId: currentConvo?._id,
               public_id: currentConvo?.public_id || "",

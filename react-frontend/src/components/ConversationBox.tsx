@@ -1,6 +1,7 @@
 import { useConvesationStore } from "@/store";
 import Chat from "./Chat";
 import { useEffect, useState } from "react";
+import no_chat_selected from "../images/no-chat-selected.png";
 
 const ConversationBox = () => {
   const conversation = useConvesationStore((state) => state.conversation);
@@ -25,7 +26,17 @@ const ConversationBox = () => {
     <div
       className={`md:flex flex-col border  rounded-md p-2 bg-background overflow-hidden  hidden basis-[65%] `}
     >
-      {isMdBreakpoint && (conversation ? <Chat /> : "no chats")}
+      {isMdBreakpoint &&
+        (conversation ? (
+          <Chat />
+        ) : (
+          <div className=" mt-32">
+            <img className="w-1/2 mx-auto" src={no_chat_selected} />
+            <p className="text-center text-muted-foreground">
+              No chat selected
+            </p>
+          </div>
+        ))}
     </div>
   );
 };
