@@ -84,7 +84,6 @@ export const deleteMessage = async (req: Request, res: Response) => {
 
     await conversation.save();
 
-    console.log("public_id: ", public_id);
     if (public_id) await cloudinary.uploader.destroy(public_id);
 
     ///broadcast to others if everything succeeds
@@ -123,7 +122,10 @@ export const updateMessage = async (req: Request, res: Response) => {
       }
     );
 
-    io.to(conversationId).emit("message-updated", {updatedMessage, senderId: req.user?._id,});
+    io.to(conversationId).emit("message-updated", {
+      updatedMessage,
+      senderId: req.user?._id,
+    });
     res.status(200).json(updatedMessage);
   } catch (error) {
     console.log("Error updating Message: ", error);

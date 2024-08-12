@@ -89,7 +89,7 @@ const Chat = ({
     ])!;
     let public_id = "";
     let image = "";
-    if (!data.image) {
+    if (!data.image || data.image.length === 0) {
       queryClient.setQueryData([conversation?._id], (oldData: any) => {
         return {
           ...oldData,
@@ -162,6 +162,7 @@ const Chat = ({
             messages: [...oldData?.messages, res.data],
           };
         });
+
         form.reset();
       } catch (e) {
         queryClient.setQueryData([conversation?._id], () => old);
@@ -215,10 +216,9 @@ const Chat = ({
       }
     },
   });
-
   useEffect(() => {
+    if (elementRef.current && inView) elementRef.current.scrollIntoView(false);
     ///if already scrolled to bottom then scroll more when message received
-    if (inView && elementRef.current) elementRef.current.scrollIntoView(false);
   }, [currentConvo]);
 
   useEffect(() => {
@@ -342,6 +342,8 @@ const Chat = ({
     if (currentConvo) {
       initializeChat();
     }
+    ///if clicks on different conversation then reset image preview adn message
+
     return () => {
       socket?.off("message-receive");
       socket?.off("seen");
@@ -352,10 +354,19 @@ const Chat = ({
     };
   }, [conversation, currentConvo]);
 
+  ///scroll to bottom and focus message input(works with isFetching and not with conversation)
   useEffect(() => {
     form.setFocus("message");
     if (elementRef.current) elementRef.current.scrollIntoView(false);
   }, [isFetching]);
+
+  useEffect(() => {
+    console.log("chnaged");
+
+    setImagePreview(false);
+    form.setValue("image", [], { shouldValidate: true });
+    form.setValue("message", "", { shouldValidate: true });
+  }, [conversation]);
 
   ///extract conversation zustand and make useQuery according to that
   return isFetching ? (
@@ -444,8 +455,9 @@ const Chat = ({
         </div>
       </ScrollArea>
       <form
+        autoComplete="off"
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex gap-1 shadow-md  border-muted-foreground p-2"
+        className="flex gap-3 shadow-md  border-muted-foreground p-2"
       >
         <Button
           type="button"
@@ -459,7 +471,7 @@ const Chat = ({
               className: "dropzone ",
             })}
           >
-            <input id="media" {...getInputProps()} />
+            <input {...getInputProps()} />
             <Camera size={20} />
           </div>
         </Button>
