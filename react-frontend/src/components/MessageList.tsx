@@ -11,6 +11,17 @@ import { motion } from "framer-motion";
 import { AnimatePresence } from "framer-motion";
 import MessageDropdown from "./MessageDropdown";
 import { useInView } from "react-intersection-observer";
+import { AdvancedImage, responsive, placeholder } from "@cloudinary/react";
+import cld from "@/cloudinary.config";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 interface ListItemProps {
   currentConvo: ConversationType;
   elementRef: React.RefObject<HTMLDivElement>;
@@ -30,6 +41,10 @@ const MessageList = ({ currentConvo, elementRef }: ListItemProps) => {
     <ul className="flex flex-col px-1">
       <AnimatePresence mode="popLayout">
         {currentConvo.messages.map((message) => {
+          let messageImage;
+          if (message.public_id)
+            messageImage = cld.image(message.public_id).quality("auto");
+
           return (
             <motion.li
               layout
@@ -49,79 +64,115 @@ const MessageList = ({ currentConvo, elementRef }: ListItemProps) => {
                     }
                   />
                   <AvatarFallback className="text-sm">
-                    {generateInitials(
-                      [
-                        ...currentConvo.admins,
-                        ...currentConvo.participants,
-                      ].find((user) => user._id === message.senderId)?.username
-                    )}
+                    {message.senderId === "assistant"
+                      ? "M"
+                      : generateInitials(
+                          [
+                            ...currentConvo.admins,
+                            ...currentConvo.participants,
+                          ].find((user) => user._id === message.senderId)
+                            ?.username
+                        )}
                   </AvatarFallback>
                 </Avatar>
               )}
-              <Card
-                className={` ${message.senderId !== userId && "bg-primary "}
+
+              {
+                <Card
+                  className={` ${message.senderId !== userId && "bg-primary "}
                   
                   
                   p-2 flex flex-col gap-1 w-full `}
-              >
-                <div className="flex gap-2 justify-between items-start">
-                  <div>
-                    <p className="text-xs font-bold">
-                      {
-                        [
-                          ...currentConvo.admins,
-                          ...currentConvo.participants,
-                        ].find((user) => user._id === message.senderId)
-                          ?.username
-                      }
-                    </p>
-                    {message.edited && (
-                      <div className="flex gap-1 text-xs">
-                        <p className=" w-[3px] h-[5] bg-secondary"></p>
-                        <p
-                          className={
-                            message.senderId === userId
-                              ? "text-muted-foreground"
-                              : "text-secondary"
-                          }
-                        >
-                          edited
-                        </p>
-                      </div>
+                >
+                  <div className="flex gap-2 justify-between items-start">
+                    <div>
+                      <p className="text-xs font-bold">
+                        {message.senderId === "assistant"
+                          ? "Meet-Me AI ✨"
+                          : [
+                              ...currentConvo.admins,
+                              ...currentConvo.participants,
+                            ].find((user) => user._id === message.senderId)
+                              ?.username}
+                      </p>
+                      {message.edited && (
+                        <div className="flex gap-1 text-xs">
+                          <p className=" w-[3px] h-[5] bg-secondary"></p>
+                          <p
+                            className={
+                              message.senderId === userId
+                                ? "text-muted-foreground"
+                                : "text-secondary"
+                            }
+                          >
+                            edited
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {message.senderId === userId && (
+                      <MessageDropdown
+                        message={message}
+                        currentConvo={currentConvo}
+                      />
                     )}
                   </div>
-
-                  {message.senderId === userId && (
-                    <MessageDropdown
-                      message={message}
-                      currentConvo={currentConvo}
-                    />
+                  <p className="w-full text-xs">{message.message}</p>
+                  {message.image && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <AdvancedImage
+                          cldImg={messageImage!}
+                          plugins={[responsive()]}
+                          className="w-40 h-40 mx-auto md:w-60 md:h-60 object-contain hover:cursor-pointer"
+                          alt="message image"
+                        />
+                      </DialogTrigger>
+                      <DialogContent className="px-1">
+                        <DialogHeader>
+                          <DialogTitle>
+                            {
+                              [
+                                ...currentConvo.admins,
+                                ...currentConvo.participants,
+                              ].find((user) => user._id === message.senderId)
+                                ?.username
+                            }
+                          </DialogTitle>
+                          <DialogDescription>
+                            {message.message}
+                          </DialogDescription>
+                          <AdvancedImage
+                            cldImg={messageImage!}
+                            plugins={[
+                              responsive(),
+                              placeholder({ mode: "blur" }),
+                            ]}
+                            className="w-full object-contain"
+                            alt="message image"
+                          />
+                        </DialogHeader>
+                      </DialogContent>
+                    </Dialog>
                   )}
-                </div>
-                <p className="w-full text-xs">{message.message}</p>
-                {message.image && (
-                  <img
-                    src={message.image}
-                    className="w-40 h-40 mx-auto md:w-60 md:h-60 object-contain"
-                    alt="message image"
-                  />
-                )}
-                <p className={`text-xs self-end flex items-center gap-1 `}>
-                  {format(message.createdAt, "hh:mm a")}
-                  {message.senderId !== userId || (
-                    <CheckCheck
-                      size={14}
-                      className={
-                        message.seenBy.length ===
-                        [...currentConvo.admins, ...currentConvo.participants]
-                          .length
-                          ? "text-primary"
-                          : "text-muted-foreground"
-                      }
-                    />
-                  )}
-                </p>
-              </Card>
+                  <p className={`text-xs self-end flex items-center gap-1 `}>
+                    {format(message.createdAt, "hh:mm a")}
+                    {message.senderId !== userId || (
+                      <CheckCheck
+                        size={14}
+                        className={
+                          message.seenBy.length ===
+                          [...currentConvo.admins, ...currentConvo.participants]
+                            .length
+                            ? "text-primary"
+                            : "text-muted-foreground"
+                        }
+                      />
+                    )}
+                  </p>
+                </Card>
+              }
             </motion.li>
           );
         })}

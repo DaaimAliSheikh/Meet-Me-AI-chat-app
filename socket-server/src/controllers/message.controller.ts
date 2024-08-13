@@ -3,8 +3,8 @@ import Conversation from "../models/conversation.model";
 import Message from "../models/message.model";
 import { io } from "../socket";
 import { v2 as cloudinary } from "cloudinary";
+import responseFromGroq from "../groq";
 
-import streamFromGroq from "../groq";
 export const sendMessage = async (req: Request, res: Response) => {
   try {
     const {
@@ -136,20 +136,13 @@ export const updateMessage = async (req: Request, res: Response) => {
 };
 
 export const generateGroqResponse = async (req: Request, res: Response) => {
-  res.setHeader("Content-Type", "text/plain");
-  res.setHeader("Transfer-Encoding", "chunked");
   const { conversationId } = req.params;
 
-  const messages = req.body.messages;
-  let message = "";
+  const {
+    prevFiveMessages,
+  }: { prevFiveMessages: { message: string; senderId: string }[] } = req.body; ///array of prev messages
 
-  io.to(conversationId).emit("ai-response-start");
-  ///when ai-response-start is listened by client, it will create a new message box for the AI
-
-  for await (const chunk of streamFromGroq(messages)) {
-    io.to(conversationId).emit("ai-response", chunk || "");
-    message += chunk || "";
-  }
+  const message = await responseFromGroq(prevFiveMessages);
 
   let conversation = await Conversation.findOne({
     _id: conversationId,
@@ -160,15 +153,17 @@ export const generateGroqResponse = async (req: Request, res: Response) => {
   }
 
   const newMessage = new Message({
-    senderId: "ai", ///will return null when populate is called as no user with id "ai" exists
+    senderId: "assistant",
     conversationId,
     message,
   });
-
   if (newMessage) {
     conversation.messages.push(newMessage._id);
   }
   await Promise.all([conversation.save(), newMessage.save()]);
+  io.to(conversationId).emit("ai-response-update", {
+    newMessage,
+  });
 
   res.json(message);
 };

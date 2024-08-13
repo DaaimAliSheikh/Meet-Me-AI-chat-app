@@ -11,6 +11,7 @@ import {
   EllipsisVertical,
   Loader2,
   Send,
+  Sparkles,
   X,
 } from "lucide-react";
 
@@ -27,6 +28,12 @@ import { ScrollArea } from "./ui/scroll-area";
 import { useForm } from "react-hook-form";
 import { useDropzone } from "react-dropzone";
 import { ConversationType, MessageType } from "@/types";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Skeleton } from "./ui/skeleton";
 
 const Chat = ({
   setShowConvo,
@@ -38,8 +45,12 @@ const Chat = ({
     setConversation: state.setConversation,
   }));
 
-  const userId = useUserStore((state) => state.user?._id);
+  const { userId } = useUserStore((state) => ({
+    userId: state.user?._id,
+    username: state.user?.username,
+  }));
   const [open, setOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
   const [imagePreview, setImagePreview] = useState(false);
   const elementRef = useRef<HTMLDivElement>(null);
 
@@ -82,12 +93,15 @@ const Chat = ({
     message: string;
     image: File[] | undefined;
   }) => {
+    ////AI STUFF
+
     const old: ConversationType = queryClient.getQueryData([
       conversation?._id,
     ])!;
     let public_id = "";
     let image = "";
     if (!data.image || data.image.length === 0) {
+      if (data.message === "") return;
       queryClient.setQueryData([conversation?._id], (oldData: any) => {
         return {
           ...oldData,
@@ -97,7 +111,7 @@ const Chat = ({
               _id: Math.random() * 100,
               senderId: userId,
               conversationId: currentConvo._id,
-              message: data.message,
+              message: "@Meet-Me-AI " + data.message,
               image,
               public_id,
               seenBy: [],
@@ -113,16 +127,38 @@ const Chat = ({
       try {
         const res = await api.post("/messages/send", {
           conversationId: currentConvo._id,
-          message: data.message,
+          message: "@Meet-Me-AI " + data.message,
           image,
           public_id,
         });
         queryClient.setQueryData([conversation?._id], () => {
           return {
             ...old,
-            messages: [...old.messages, res.data], ///replace the optimistic with actual
+            messages: [
+              ...old.messages,
+              { ...res.data, message: res.data.message },
+            ], ///replace the optimistic with actual
           };
         });
+        ///AI STUFF
+        if (popoverOpen) {
+          const prevFiveMessages = [
+            ...currentConvo.messages.slice(-4).map((m: MessageType) => ({
+              message: m.message,
+              senderId: m.senderId,
+            })),
+            {
+              message: data.message,
+              senderId: userId,
+            },
+          ];
+
+          await api.post(`/messages/ai/${currentConvo._id}`, {
+            prevFiveMessages,
+          });
+
+          setPopoverOpen(false);
+        }
       } catch {
         queryClient.setQueryData([conversation?._id], () => old);
       }
@@ -149,7 +185,7 @@ const Chat = ({
         public_id = result.public_id;
         const res = await api.post("/messages/send", {
           conversationId: currentConvo._id,
-          message: data.message,
+          message: "@Meet-Me-AI " + data.message,
           image,
           public_id,
         });
@@ -157,7 +193,7 @@ const Chat = ({
         queryClient.setQueryData([conversation?._id], (oldData: any) => {
           return {
             ...oldData,
-            messages: [...oldData?.messages, res.data],
+            messages: [...oldData?.messages, res.data.message],
           };
         });
 
@@ -214,6 +250,7 @@ const Chat = ({
         throw new Error(error?.message);
       }
     },
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -331,6 +368,18 @@ const Chat = ({
             });
         }
       );
+
+      socket?.on(
+        "ai-response-update",
+        ({ newMessage }: { newMessage: MessageType }) => {
+          queryClient.setQueryData([conversation?._id], (oldData: any) => {
+            return {
+              ...oldData,
+              messages: [...oldData?.messages, newMessage],
+            };
+          });
+        }
+      );
       ///seen all messages of this conversation, emits seen-all event which is handled above
       await api.put(`/messages/seen-all/${currentConvo._id}`);
     };
@@ -345,6 +394,8 @@ const Chat = ({
       socket?.off("seen-all");
       socket?.off("message-delete");
       socket?.off("message-updated");
+      socket?.off("ai-response-update");
+      socket?.off("ai-response");
       if (currentConvo) socket?.emit("leave", currentConvo._id);
     };
   }, [conversation, currentConvo]);
@@ -450,14 +501,14 @@ const Chat = ({
       <form
         autoComplete="off"
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex gap-3 shadow-md  border-muted-foreground p-2"
+        className="flex gap-1 shadow-md  border-muted-foreground p-2"
       >
         <Button
           type="button"
           className="w-12"
           variant={"secondary"}
           size={"icon"}
-          disabled={form.formState.isSubmitting}
+          disabled={form.formState.isSubmitting || popoverOpen}
         >
           <div
             {...getRootProps({
@@ -468,12 +519,40 @@ const Chat = ({
             <Camera size={20} />
           </div>
         </Button>
+        <Popover open={popoverOpen}>
+          <PopoverTrigger
+            disabled={imagePreview}
+            onClick={() => {
+              setPopoverOpen((prev) => !prev);
+            }}
+            className={`border h-full p-1 relative ${
+              popoverOpen && "bg-secondary"
+            }`}
+          >
+            {!popoverOpen ? (
+              <Sparkles strokeWidth={1.2} />
+            ) : (
+              <X strokeWidth={1.2} />
+            )}
+            {popoverOpen && (
+              <div className="absolute z-10 inset-0 border-2 border-transparent  animate-spin rainbow-border"></div>
+            )}
+          </PopoverTrigger>
+          <PopoverContent className="relative w-[12rem] h-[3rem] p-5 rounded-lg">
+            <div className="absolute z-10 inset-0 border-2 border-transparent rounded-lg animate-spin rainbow-border"></div>
+            <Skeleton className="absolute inset-0" />
+            <p className="absolute z-10 whitespace-nowrap  -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2">
+              Asking Meet-Me AI...
+            </p>
+          </PopoverContent>
+        </Popover>
         <Input
           disabled={form.formState.isSubmitting}
           {...form.register("message", {
             required: acceptedFiles.length > 0 ? false : "Message is required",
           })}
         />
+
         <Button
           disabled={form.formState.isSubmitting}
           type="submit"

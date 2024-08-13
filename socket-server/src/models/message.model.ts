@@ -17,9 +17,11 @@ const messageSchema = new mongoose.Schema(
     },
     image: {
       type: String,
+      default: "",
     },
     public_id: {
       type: String,
+      default: "",
     },
     seenBy: [
       {
