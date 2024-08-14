@@ -42,6 +42,7 @@ const UsersList = () => {
             ///to not interfere other peoples chats who are not affiliated with the changing chat as this event is sent to all convos
             if (![...admins, ...participants].includes(userId)) {
               setShowConvo(false);
+              setConversation(null);
               toast({
                 title: "Conversation was deleted",
               });
@@ -79,6 +80,7 @@ const UsersList = () => {
           queryClient.getQueryData([conversation?._id]);
         if (conversationId == currentConvo?._id) {
           queryClient.invalidateQueries({ queryKey: [conversation?._id] });
+          setConversation(null);
 
           setShowConvo(false);
           toast({
@@ -128,7 +130,9 @@ const UsersList = () => {
       ) : isLoading ? (
         <Loader2 className="animate-spin mt-[30vh] mx-auto text-foreground" />
       ) : users.length === 0 ? (
-        <p className="mt-[30vh]  mx-auto  text-foreground">No users found</p>
+        <p className="mt-[30vh] w-full text-center text-foreground">
+          No users found
+        </p>
       ) : (
         users
           .filter((user) =>

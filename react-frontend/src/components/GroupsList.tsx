@@ -52,6 +52,7 @@ const GroupsList = () => {
           if (conversationId == currentConvo?._id) {
             if (![...admins, ...participants].includes(userId)) {
               setShowConvo(false); ///to not close other peoples chats who are not affiliated with the changing chat
+              setConversation(null);
               toast({
                 title: "You were kicked out of this group",
               });
@@ -89,7 +90,7 @@ const GroupsList = () => {
           queryClient.getQueryData([conversation?._id]);
         if (conversationId == currentConvo?._id) {
           queryClient.invalidateQueries({ queryKey: [conversation?._id] });
-
+          setConversation(null);
           setShowConvo(false);
           toast({
             title: "Conversation was deleted",

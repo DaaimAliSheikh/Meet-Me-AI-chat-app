@@ -366,7 +366,7 @@ const ConversationDetails = ({
         </Form>
       ) : (
         <p className="text-sm text-center mb-2 text-muted-foreground">
-          conversation started on
+          conversation started on{" "}
           {format(currentConvo?.createdAt as Date, "MMMM do, yyyy")}
         </p>
       )}
