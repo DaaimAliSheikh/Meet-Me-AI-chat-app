@@ -93,8 +93,6 @@ const Chat = ({
     message: string;
     image: File[] | undefined;
   }) => {
-    ////AI STUFF
-
     const old: ConversationType = queryClient.getQueryData([
       conversation?._id,
     ])!;
@@ -111,7 +109,7 @@ const Chat = ({
               _id: Math.random() * 100,
               senderId: userId,
               conversationId: currentConvo._id,
-              message: "@Meet-Me-AI " + data.message,
+              message: (popoverOpen ? "@Meet-Me-AI " : "") + data.message,
               image,
               public_id,
               seenBy: [],
@@ -127,17 +125,14 @@ const Chat = ({
       try {
         const res = await api.post("/messages/send", {
           conversationId: currentConvo._id,
-          message: "@Meet-Me-AI " + data.message,
+          message: (popoverOpen ? "@Meet-Me-AI " : "") + data.message,
           image,
           public_id,
         });
         queryClient.setQueryData([conversation?._id], () => {
           return {
-            ...old,
-            messages: [
-              ...old.messages,
-              { ...res.data, message: res.data.message },
-            ], ///replace the optimistic with actual
+            ...old, ///using old instead of oldData from arg because oldData consists of the optimistic which we dont want
+            messages: [...old.messages, res.data], ///replace the optimistic with actual
           };
         });
         ///AI STUFF
@@ -185,7 +180,7 @@ const Chat = ({
         public_id = result.public_id;
         const res = await api.post("/messages/send", {
           conversationId: currentConvo._id,
-          message: "@Meet-Me-AI " + data.message,
+          message: data.message,
           image,
           public_id,
         });
@@ -193,7 +188,7 @@ const Chat = ({
         queryClient.setQueryData([conversation?._id], (oldData: any) => {
           return {
             ...oldData,
-            messages: [...oldData?.messages, res.data.message],
+            messages: [...oldData?.messages, res.data],
           };
         });
 

@@ -8,13 +8,12 @@ import {
 import api from "./lib/api";
 import { Socket } from "socket.io-client";
 import { io } from "socket.io-client";
-
-const API_URL = "http://localhost:3000";
+import { baseURL } from "./baseURL";
 
 let user: UserType | null = null;
 let socket: Socket | null = null;
 
-socket = io(API_URL);
+socket = io(baseURL);
 
 (async () => {
   try {

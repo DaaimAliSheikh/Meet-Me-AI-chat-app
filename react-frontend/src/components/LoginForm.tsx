@@ -27,6 +27,7 @@ import { useUserStore } from "@/store";
 
 import { FcGoogle } from "react-icons/fc";
 import { useSearchParams } from "react-router-dom";
+import { baseURL } from "@/baseURL";
 
 const LoginForm = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -127,9 +128,7 @@ const LoginForm = () => {
           </form>
         </Form>
         <Button
-          onClick={() =>
-            (window.location.href = "http://localhost:3000/api/auth/google")
-          }
+          onClick={() => (window.location.href = baseURL + "/api/auth/google")}
           className="w-full mt-2"
           variant={"secondary"}
         >

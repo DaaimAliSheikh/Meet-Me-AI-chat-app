@@ -9,6 +9,6 @@
     "skipLibCheck": true,
     "allowJs": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/public"],
   "exclude": ["node_modules"]
 }

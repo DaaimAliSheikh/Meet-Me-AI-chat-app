@@ -35,7 +35,6 @@ const UsersList = () => {
         if (user_id != userId) {
           queryClient.invalidateQueries({ queryKey: ["groups"] });
           queryClient.invalidateQueries({ queryKey: ["users"] });
-          queryClient.invalidateQueries({ queryKey: [conversation?._id] });
 
           const currentConvo: ConversationType | undefined =
             queryClient.getQueryData([conversation?._id]);
@@ -48,6 +47,8 @@ const UsersList = () => {
               });
               return;
             }
+            queryClient.invalidateQueries({ queryKey: [conversation?._id] });
+
             toast({
               title: "Conversation was updated",
             });
@@ -59,27 +60,31 @@ const UsersList = () => {
       if (user_id != userId) {
         queryClient.invalidateQueries({ queryKey: ["groups"] });
         queryClient.invalidateQueries({ queryKey: ["users"] });
-        queryClient.invalidateQueries({ queryKey: [conversation?._id] });
         const currentConvo: ConversationType | undefined =
           queryClient.getQueryData([conversation?._id]);
-        if (conversationId == currentConvo?._id)
+        if (conversationId == currentConvo?._id) {
+          queryClient.invalidateQueries({ queryKey: [conversation?._id] });
+
           toast({
             title: "Conversation was updated",
           });
+        }
       }
     });
     socket?.on("conversation-delete", (user_id, conversationId) => {
       if (user_id != userId) {
         queryClient.invalidateQueries({ queryKey: ["groups"] });
         queryClient.invalidateQueries({ queryKey: ["users"] });
-        queryClient.invalidateQueries({ queryKey: [conversation?._id] });
         const currentConvo: ConversationType | undefined =
           queryClient.getQueryData([conversation?._id]);
-        if (conversationId == currentConvo?._id) setShowConvo(false);
+        if (conversationId == currentConvo?._id) {
+          queryClient.invalidateQueries({ queryKey: [conversation?._id] });
 
-        toast({
-          title: "Conversation was deleted",
-        });
+          setShowConvo(false);
+          toast({
+            title: "Conversation was deleted",
+          });
+        }
       }
     });
 

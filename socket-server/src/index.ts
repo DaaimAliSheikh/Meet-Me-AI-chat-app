@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import express, { NextFunction, Request, Response } from "express";
 import { app, server } from "./socket";
+import path from "path";
 ///cors setting done in socket.ts
 import connectToMongoDB from "./db/connectToMongodb";
 import passport from "passport";
@@ -26,6 +27,8 @@ passport.use(localStrategy);
 passport.use(googleStrategy);
 passport.use(jwtStrategy);
 
+app.use(express.static(path.join(__dirname, "public")));
+
 app.use("/api/cloudinary", cloudinaryRoutes);
 
 app.use("/api/auth", authRoutes);
@@ -48,6 +51,16 @@ app.use(
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.log("server error");
   return res.status(500).json({ error: err.message });
+});
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.all("*", (req: Request, res: Response) => {
+  res.json({
+    message: path.join(__dirname, "public"),
+  });
 });
 
 const PORT = process.env.PORT || 3000;

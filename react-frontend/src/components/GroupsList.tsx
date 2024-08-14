@@ -47,8 +47,6 @@ const GroupsList = () => {
           queryClient.invalidateQueries({ queryKey: ["groups"] });
           queryClient.invalidateQueries({ queryKey: ["users"] });
 
-          queryClient.invalidateQueries({ queryKey: [conversation?._id] });
-
           const currentConvo: ConversationType | undefined =
             queryClient.getQueryData([conversation?._id]);
           if (conversationId == currentConvo?._id) {
@@ -59,6 +57,8 @@ const GroupsList = () => {
               });
               return;
             }
+            queryClient.invalidateQueries({ queryKey: [conversation?._id] });
+
             toast({
               title: "Conversation was updated",
             });
@@ -70,23 +70,26 @@ const GroupsList = () => {
       if (user_id != userId) {
         queryClient.invalidateQueries({ queryKey: ["groups"] });
         queryClient.invalidateQueries({ queryKey: ["users"] });
-        queryClient.invalidateQueries({ queryKey: [conversation?._id] });
         const currentConvo: ConversationType | undefined =
           queryClient.getQueryData([conversation?._id]);
-        if (conversationId == currentConvo?._id)
+        if (conversationId == currentConvo?._id) {
+          queryClient.invalidateQueries({ queryKey: [conversation?._id] });
+
           toast({
             title: "Conversation was updated",
           });
+        }
       }
     });
     socket?.on("conversation-delete", (user_id, conversationId) => {
       if (user_id != userId) {
         queryClient.invalidateQueries({ queryKey: ["groups"] });
         queryClient.invalidateQueries({ queryKey: ["users"] });
-        queryClient.invalidateQueries({ queryKey: [conversation?._id] });
         const currentConvo: ConversationType | undefined =
           queryClient.getQueryData([conversation?._id]);
         if (conversationId == currentConvo?._id) {
+          queryClient.invalidateQueries({ queryKey: [conversation?._id] });
+
           setShowConvo(false);
           toast({
             title: "Conversation was deleted",
