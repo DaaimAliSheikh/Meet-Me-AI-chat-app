@@ -19,11 +19,19 @@ const io = new Server(server, {
   },
 });
 
-let onlineUsersIds: string[] = [];
+let onlineUsersIds: Map<string, string> = new Map();
+//socket id to user id
 
 const handleSocketConnect = (socket: Socket) => {
-  onlineUsersIds.push(socket.handshake.query.userId as string);
-  io.emit("onlineUsers", onlineUsersIds);
+  if (
+    !Array.from(onlineUsersIds.values()).find(
+      (key) => key === (socket.handshake.query.userId as string)
+    )
+  )
+    onlineUsersIds.set(socket.id, socket.handshake.query.userId as string);
+  io.emit("onlineUsers", {
+    onlineUsersIds: Array.from(onlineUsersIds.values()),
+  });
 
   ///every client when they receive a message will emit this event to the server
   socket.on("seen-by", async (messageId, userId) => {
@@ -45,11 +53,10 @@ const handleSocketConnect = (socket: Socket) => {
 
 const handleSocketDisconnect = (socket: Socket) => {
   ///to remove online status
-  onlineUsersIds.splice(
-    onlineUsersIds.indexOf(socket.handshake.query.userId as string),
-    1
-  );
-  io.emit("onlineUsers", onlineUsersIds);
+  onlineUsersIds.delete(socket.id);
+  io.emit("onlineUsers", {
+    onlineUsersIds: Array.from(onlineUsersIds.values()),
+  });
 };
 
 io.on("connection", (socket) => {

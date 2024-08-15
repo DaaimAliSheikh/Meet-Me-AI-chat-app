@@ -79,15 +79,27 @@ export const getConversationById = async (req: Request, res: Response) => {
 export const createConversation = async (req: Request, res: Response) => {
   try {
     //name, description, type, image, admins, public_id participants
-    const conversation = await Conversation.create(req.body);
-
-    conversation.populate({
-      path: "participants",
-      select: "_id username image",
-    });
-    conversation.populate({ path: "admins", select: "_id username image" });
-    conversation.populate({ path: "messages" });
     ///creator should be in the admins of the conversation by default
+
+    const newConversation = await Conversation.create(req.body);
+
+    if (!newConversation) {
+      throw new Error("Conversation could not be created");
+    }
+
+    const conversation = await Conversation.findOne({
+      _id: newConversation._id,
+    })
+      .populate({
+        path: "messages",
+      })
+      .populate({ path: "participants", select: "_id username image" })
+      .populate({ path: "admins", select: "_id username image" });
+
+    if (!conversation) {
+      throw new Error("Conversation not found");
+    }
+
     io.emit("conversation-refetch", req.user?._id, conversation._id); ///invalidate queries on frontend
     res.status(200).json(conversation);
   } catch (error) {

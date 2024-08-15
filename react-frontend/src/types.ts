@@ -77,4 +77,5 @@ export interface ISocketStore {
   onlineUsers: string[];
   socket: Socket | null;
   setOnlineUsers: (users: string[]) => void;
+  setSocket: (newSocket: Socket | null) => void;
 }

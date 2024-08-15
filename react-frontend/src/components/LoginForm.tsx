@@ -23,16 +23,21 @@ import SuccessAlert from "./SuccessAlert";
 import { LoaderCircle } from "lucide-react";
 import api from "@/lib/api";
 import { AxiosError } from "axios";
-import { useUserStore } from "@/store";
+import { useSocketStore, useUserStore } from "@/store";
 
 import { FcGoogle } from "react-icons/fc";
 import { useSearchParams } from "react-router-dom";
 import { baseURL } from "@/baseURL";
+import { io } from "socket.io-client";
 
 const LoginForm = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const setUser = useUserStore((state) => state.setUser);
+  const { setSocket, setOnlineUsers } = useSocketStore((state) => ({
+    setSocket: state.setSocket,
+    setOnlineUsers: state.setOnlineUsers,
+  }));
 
   const [searchParams, _setSearchParams] = useSearchParams();
   const onSubmit = useCallback(async (data: LoginFormType) => {
@@ -42,8 +47,18 @@ const LoginForm = () => {
         email,
         password,
       });
+      if (!response.data.user) return;
       setUser(response.data.user);
-      localStorage.setItem("chat-user", JSON.stringify(response.data.user));
+      const socket = io(baseURL, {
+        query: { userId: response.data.user._id },
+      });
+      socket?.on(
+        "onlineUsers",
+        ({ onlineUsersIds }: { onlineUsersIds: string[] }) => {
+          setOnlineUsers(onlineUsersIds);
+        }
+      );
+      setSocket(socket);
     } catch (e) {
       if (e instanceof AxiosError) {
         setSuccessMsg(null);

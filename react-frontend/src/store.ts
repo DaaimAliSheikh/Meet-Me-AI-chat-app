@@ -5,31 +5,13 @@ import {
   UserType,
   ISocketStore,
 } from "./types";
-import api from "./lib/api";
 import { Socket } from "socket.io-client";
-import { io } from "socket.io-client";
-import { baseURL } from "./baseURL";
 
-let user: UserType | null = null;
-let socket: Socket | null = null;
 
-socket = io(baseURL);
-
-(async () => {
-  try {
-    await api.get("/auth/login/success");
-    user =
-      (JSON.parse(localStorage.getItem("chat-user") as string) as UserType) ||
-      null;
-  } catch {
-    user = null;
-    socket = null;
-  }
-})();
 
 export const useUserStore = create<IUserStore>((set) => {
   return {
-    user,
+    user: null,
     setUser: (newUser: UserType | null) => set({ user: newUser }),
   };
 });
@@ -37,8 +19,9 @@ export const useUserStore = create<IUserStore>((set) => {
 export const useSocketStore = create<ISocketStore>((set) => {
   return {
     onlineUsers: [],
-    socket,
+    socket: null,
     setOnlineUsers: (users: string[]) => set({ onlineUsers: users }),
+    setSocket: (newSocket: Socket | null) => set({ socket: newSocket }),
     ///set socket in app.tsx after validating user
   };
 });

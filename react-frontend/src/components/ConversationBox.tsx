@@ -24,7 +24,7 @@ const ConversationBox = () => {
   }, []);
   return (
     <div
-      className={`md:flex flex-col border  rounded-md p-2 bg-background overflow-hidden  hidden basis-[65%] `}
+      className={`md:flex flex-col border flex-1 rounded-md p-2 bg-background overflow-hidden  hidden basis-[65%] `}
     >
       {isMdBreakpoint &&
         (conversation ? (

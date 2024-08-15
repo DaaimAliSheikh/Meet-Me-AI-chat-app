@@ -118,7 +118,7 @@ const ConversationDetails = ({
   }));
 
   const isAdmin = !!currentConvo?.admins?.find(
-    (admin) => admin?._id === user?._id
+    (admin) => admin._id === user?._id
   );
 
   const onSubmit = async (data: CreateGroupFormSchemaType) => {

@@ -93,6 +93,9 @@ const Chat = ({
     message: string;
     image: File[] | undefined;
   }) => {
+    form.setValue("image", [], { shouldValidate: true });
+    form.setValue("message", "", { shouldValidate: true });
+    form.setFocus("message");
     const old: ConversationType = queryClient.getQueryData([
       conversation?._id,
     ])!;
@@ -120,7 +123,6 @@ const Chat = ({
           ],
         };
       });
-      form.reset();
 
       try {
         const res = await api.post("/messages/send", {
@@ -191,15 +193,12 @@ const Chat = ({
             messages: [...oldData?.messages, res.data],
           };
         });
-
-        form.reset();
       } catch (e) {
         queryClient.setQueryData([conversation?._id], () => old);
       }
     }
 
     setImagePreview(false);
-    form.setFocus("message");
 
     ///if already scrolled to bottom then scroll more when message received
   };
@@ -240,6 +239,7 @@ const Chat = ({
             admins: [conversation?._id, userId], ///send own id and otherUserId
             participants: [],
           });
+
           return result.data;
         }
         throw new Error(error?.message);
@@ -393,7 +393,7 @@ const Chat = ({
       socket?.off("ai-response");
       if (currentConvo) socket?.emit("leave", currentConvo._id);
     };
-  }, [conversation, currentConvo]);
+  }, [conversation, currentConvo, socket]);
 
   ///scroll to bottom and focus message input(works with isFetching and not with conversation)
   useEffect(() => {
@@ -496,7 +496,7 @@ const Chat = ({
       <form
         autoComplete="off"
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex gap-1 shadow-md  border-muted-foreground p-2"
+        className="flex gap-1 shadow-md border-muted-foreground p-2"
       >
         <Button
           type="button"
@@ -542,7 +542,6 @@ const Chat = ({
           </PopoverContent>
         </Popover>
         <Input
-          disabled={form.formState.isSubmitting}
           {...form.register("message", {
             required: acceptedFiles.length > 0 ? false : "Message is required",
           })}

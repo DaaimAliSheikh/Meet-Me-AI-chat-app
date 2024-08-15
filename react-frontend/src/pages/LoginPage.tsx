@@ -1,11 +1,17 @@
 import LoginForm from "@/components/LoginForm";
 import { Link } from "react-router-dom";
 import api from "@/lib/api";
-import { useUserStore } from "@/store";
+import { useSocketStore, useUserStore } from "@/store";
 import { useEffect } from "react";
+import { baseURL } from "@/baseURL";
+import { io } from "socket.io-client";
 
 const LoginPage = () => {
   const setUser = useUserStore((state) => state.setUser);
+  const { setSocket, setOnlineUsers } = useSocketStore((state) => ({
+    setSocket: state.setSocket,
+    setOnlineUsers: state.setOnlineUsers,
+  }));
 
   ///for after oauth redirect to this page
   useEffect(() => {
@@ -13,11 +19,18 @@ const LoginPage = () => {
       try {
         const response = await api.get("auth/login/success");
         if (!response.data.user) return;
+        const socket = io(baseURL, {
+          query: { userId: response.data.user._id },
+        });
+        socket?.on(
+          "onlineUsers",
+          ({ onlineUsersIds }: { onlineUsersIds: string[] }) => {
+            setOnlineUsers(onlineUsersIds);
+          }
+        );
+        setSocket(socket);
         setUser(response.data.user);
-        localStorage.setItem("chat-user", JSON.stringify(response.data.user));
-      } catch (e) {
-        console.log("could not get user");
-      }
+      } catch (e) {}
     })();
   }, []);
   return (

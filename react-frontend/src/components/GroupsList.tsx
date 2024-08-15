@@ -37,6 +37,23 @@ const GroupsList = () => {
     setConversation: state.setConversation,
     conversation: state.conversation,
   }));
+  const [isMdBreakpoint, setIsMdBreakpoint] = useState(
+    window.innerWidth >= 768
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMdBreakpoint(window.innerWidth >= 768);
+    };
+
+    // Add event listener on component mount
+    window.addEventListener("resize", handleResize);
+
+    // Remove event listener on component unmount
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     ///socket events for what others will see when group is updated/deleted/kicked out/left
@@ -104,7 +121,7 @@ const GroupsList = () => {
       socket?.off("conversation-refetch");
       socket?.off("conversation-delete");
     };
-  }, [conversation]);
+  }, [conversation, socket]);
 
   const { data, isError, isLoading, isSuccess, refetch } = useQuery({
     queryKey: ["groups"],
@@ -157,7 +174,7 @@ const GroupsList = () => {
         ) : (
           groups
             .filter((group) =>
-              group.name.toLowerCase().includes(searchValue.toLowerCase())
+              group?.name.toLowerCase().includes(searchValue.toLowerCase())
             )
             ?.map((group) => {
               return (
@@ -198,9 +215,11 @@ const GroupsList = () => {
             animate={{ x: "0%" }}
             initial={{ x: "100%" }}
             exit={{ x: "100%" }}
-            className="absolute border top-0 left-0  bg-background p-1 overflow-hidden flex flex-col h-screen w-[100%] md:hidden"
+            className="absolute border top-0 left-0  bg-background p-1 flex flex-col h-[100svh]  w-[100%] md:hidden"
           >
-            {conversation && <Chat setShowConvo={setShowConvo} />}
+            {conversation && !isMdBreakpoint && (
+              <Chat setShowConvo={setShowConvo} />
+            )}
           </motion.div>
         ) : null}
       </AnimatePresence>

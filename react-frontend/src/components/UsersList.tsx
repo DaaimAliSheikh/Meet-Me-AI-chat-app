@@ -19,8 +19,28 @@ const UsersList = () => {
   const [users, setUsers] = useState<ChatListUser[]>([]);
   const [searchValue, setsearchValue] = useState("");
   const [showConvo, setShowConvo] = useState(false);
+  const [isMdBreakpoint, setIsMdBreakpoint] = useState(
+    window.innerWidth >= 768
+  );
 
-  const socket = useSocketStore((state) => state.socket);
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMdBreakpoint(window.innerWidth >= 768);
+    };
+
+    // Add event listener on component mount
+    window.addEventListener("resize", handleResize);
+
+    // Remove event listener on component unmount
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  const { socket, onlineUsers } = useSocketStore((state) => ({
+    socket: state.socket,
+    onlineUsers: state.onlineUsers,
+  }));
   const userId = useUserStore((state) => state.user?._id);
   const queryClient = useQueryClient();
   const { setConversation, conversation } = useConvesationStore((state) => ({
@@ -95,7 +115,7 @@ const UsersList = () => {
       socket?.off("conversation-refetch");
       socket?.off("conversation-delete");
     };
-  }, [conversation]);
+  }, [conversation, socket]);
 
   const { data, isError, isLoading, isSuccess, refetch } = useQuery({
     queryKey: ["users"],
@@ -151,17 +171,26 @@ const UsersList = () => {
                   });
                   setShowConvo(true);
                 }}
-                className={`flex items-center p-2 hover:cursor-pointer justify-between ${
+                className={`flex items-center my-2 p-2 hover:cursor-pointer justify-between ${
                   conversation?._id === user._id ? "bg-secondary" : ""
                 }`}
               >
                 <div className="flex p-1 flex-grow overflow-hidden items-center gap-4">
-                  <Avatar className={user?.image ? "" : "outline"}>
-                    <AvatarImage src={user?.image || ""} />
-                    <AvatarFallback>
-                      {generateInitials(user?.username)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                    <p
+                      className={`absolute z-10 top-0 -right-1 h-4 w-4 rounded-full border-2 dark:border-white border-gray-500 ${
+                        onlineUsers.find((user_id) => user_id === user?._id)
+                          ? "bg-green-500"
+                          : "bg-red-500"
+                      }`}
+                    ></p>
+                    <Avatar className={user?.image ? "" : "outline"}>
+                      <AvatarImage src={user?.image || ""} />
+                      <AvatarFallback>
+                        {generateInitials(user?.username)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
                   <h3 className=" font-bold dark:text-zinc-100 text-zinc-600 text-ellipsis whitespace-nowrap overflow-hidden">
                     {user?.username}
                   </h3>
@@ -176,9 +205,9 @@ const UsersList = () => {
             animate={{ x: "0%" }}
             initial={{ x: "100vw" }}
             exit={{ x: "100vw" }}
-            className="absolute border top-0 left-0  bg-background p-1 overflow-hidden flex flex-col h-screen w-[100%] md:hidden"
+            className="absolute border top-0 left-0 z-20  bg-background p-1  flex flex-col h-[100svh] w-[100%] md:hidden"
           >
-            {conversation && <Chat setShowConvo={setShowConvo} />}
+            {conversation &&  !isMdBreakpoint && <Chat setShowConvo={setShowConvo} />}
           </motion.div>
         ) : null}
       </AnimatePresence>

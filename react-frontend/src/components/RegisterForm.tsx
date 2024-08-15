@@ -27,11 +27,18 @@ import api from "@/lib/api";
 import { AxiosError } from "axios";
 import { useSearchParams } from "react-router-dom";
 import { baseURL } from "@/baseURL";
+import { io } from "socket.io-client";
+import { useSocketStore, useUserStore } from "@/store";
 
 const RegisterForm = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [searchParams, _setSearchParams] = useSearchParams();
+  const { setSocket, setOnlineUsers } = useSocketStore((state) => ({
+    setSocket: state.setSocket,
+    setOnlineUsers: state.setOnlineUsers,
+  }));
+  const setUser = useUserStore((state) => state.setUser);
 
   const form = useForm<RegisterFormType>({
     shouldUnregister: false,
@@ -60,6 +67,18 @@ const RegisterForm = () => {
         email,
         password,
       });
+      if (!response.data.user) return;
+      setUser(response.data.user);
+      const socket = io(baseURL, {
+        query: { userId: response.data.user._id },
+      });
+      socket?.on(
+        "onlineUsers",
+        ({ onlineUsersIds }: { onlineUsersIds: string[] }) => {
+          setOnlineUsers(onlineUsersIds);
+        }
+      );
+      setSocket(socket);
       setErrorMsg(null);
       setSuccessMsg(response.data.message);
     } catch (e) {

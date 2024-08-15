@@ -30,6 +30,7 @@ interface ListItemProps {
 const MessageList = ({ currentConvo, elementRef }: ListItemProps) => {
   const userId = useUserStore((state) => state.user?._id);
   const [ref, inView] = useInView();
+
   useEffect(() => {
     if (elementRef.current && inView) {
       elementRef.current.scrollIntoView(false);

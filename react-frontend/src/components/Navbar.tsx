@@ -23,7 +23,7 @@ const Navbar = () => {
 
   return (
     <>
-      <main className="flex flex-col h-screen  ">
+      <main className=" h-[100vh] flex flex-col ">
         <nav
           className={` flex w-full p-1  mx-auto items-center  ${
             user ? "justify-between " : "justify-center "

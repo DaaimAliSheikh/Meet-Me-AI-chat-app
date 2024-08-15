@@ -57,13 +57,8 @@ app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.all("*", (req: Request, res: Response) => {
-  res.json({
-    message: path.join(__dirname, "public"),
-  });
-});
-
 const PORT = process.env.PORT || 3000;
+
 (async () => {
   await connectToMongoDB();
   server.listen(PORT, () => {
