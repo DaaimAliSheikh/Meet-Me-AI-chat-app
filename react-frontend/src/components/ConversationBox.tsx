@@ -1,7 +1,7 @@
 import { useConvesationStore } from "@/store";
 import Chat from "./Chat";
 import { useEffect, useState } from "react";
-import no_chat_selected from "../images/no-chat-selected.png";
+import { Ban } from "lucide-react";
 
 const ConversationBox = () => {
   const conversation = useConvesationStore((state) => state.conversation);
@@ -30,9 +30,9 @@ const ConversationBox = () => {
         (conversation ? (
           <Chat />
         ) : (
-          <div className=" mt-32">
-            <img className="w-1/2 mx-auto" src={no_chat_selected} />
-            <p className="text-center text-muted-foreground">
+          <div className=" mt-60 mx-auto flex items-center text-muted-foreground flex-col">
+            <Ban size={40}/>
+            <p className="mt-4 ">
               No chat selected
             </p>
           </div>

@@ -219,7 +219,7 @@ const ConversationDetails = ({
     <ScrollArea
       className={`${
         conversation?.type === "group" && isAdmin && "h-[80vh]"
-      }  md:w-full `}
+      }  md:w-full p-2`}
     >
       <Avatar className={"my-4 mx-auto w-16 h-16 border-foreground border-2"}>
         <AvatarImage
@@ -229,7 +229,7 @@ const ConversationDetails = ({
               : conversation?.image || ""
           }
         />
-        <AvatarFallback className="text-sm">
+        <AvatarFallback className="text-lg">
           {generateInitials(
             currentConvo?.type === "group"
               ? currentConvo?.name || ""
@@ -375,7 +375,7 @@ const ConversationDetails = ({
         variant={"destructive"}
         disabled={isPending}
         type="button"
-        className="flex gap-2 my-2 w-[95%] md:w-full ml-1"
+        className="flex gap-2 my-2 w-[94%] md:w-full ml-1"
         onClick={async () => {
           if (isAdmin) {
             deleteConversation({

@@ -80,7 +80,7 @@ const MessageList = ({ currentConvo, elementRef }: ListItemProps) => {
 
               {
                 <Card
-                  className={` ${message.senderId !== userId && "bg-primary "}
+                  className={` ${message.senderId !== userId && "bg-primary text-background"}
                   
                   
                   p-2 flex flex-col gap-1 w-full `}

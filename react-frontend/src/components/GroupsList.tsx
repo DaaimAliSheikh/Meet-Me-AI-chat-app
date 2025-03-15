@@ -144,7 +144,7 @@ const GroupsList = () => {
         <Input
           value={searchValue}
           onChange={(e) => setsearchValue(e.target.value)}
-          placeholder="Search for people..."
+          placeholder="Search for groups..."
         />
 
         <Dialog open={open} onOpenChange={setOpen}>
@@ -160,7 +160,7 @@ const GroupsList = () => {
         </Dialog>
       </div>
 
-      <ScrollArea className={"h-[65vh]"}>
+      <ScrollArea className={"h-[77vh] overflow-auto pr-2 border"}>
         {isError ? (
           <Button onClick={() => refetch()} className="mt-[30vh]">
             Retry
@@ -172,41 +172,43 @@ const GroupsList = () => {
             No groups found
           </p>
         ) : (
-          groups
-            .filter((group) =>
-              group?.name.toLowerCase().includes(searchValue.toLowerCase())
-            )
-            ?.map((group) => {
-              return (
-                <Card
-                  key={group?._id}
-                  onClick={() => {
-                    setConversation({
-                      type: "group",
-                      _id: group._id,
-                      name: null,
-                      image: null,
-                    });
-                    setShowConvo(true);
-                  }}
-                  className={`flex my-2 items-center p-2 hover:cursor-pointer justify-between ${
-                    conversation?._id === group._id ? "bg-secondary" : ""
-                  }`}
-                >
-                  <div className="flex p-1 flex-grow overflow-hidden items-center gap-4">
-                    <Avatar className={"border-2 border-muted-foreground"}>
-                      <AvatarImage src={group?.image || ""} />
-                      <AvatarFallback>
-                        {generateInitials(group?.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <h3 className=" text-zinc-600 dark:text-zinc-100 font-bold text-ellipsis whitespace-nowrap overflow-hidden">
-                      {group?.name}
-                    </h3>
-                  </div>
-                </Card>
-              );
-            })
+          <ul className="">
+            {groups
+              .filter((group) =>
+                group?.name.toLowerCase().includes(searchValue.toLowerCase())
+              )
+              ?.map((group) => {
+                return (
+                  <Card
+                    key={group?._id}
+                    onClick={() => {
+                      setConversation({
+                        type: "group",
+                        _id: group._id,
+                        name: null,
+                        image: null,
+                      });
+                      setShowConvo(true);
+                    }}
+                    className={`flex my-2 items-center border-0 border-b-2 p-2 hover:cursor-pointer justify-between ${
+                      conversation?._id === group._id ? "bg-secondary" : ""
+                    }`}
+                  >
+                    <div className="flex p-1 flex-grow overflow-hidden items-center gap-4">
+                      <Avatar className={"border-2 border-muted-foreground"}>
+                        <AvatarImage src={group?.image || ""} />
+                        <AvatarFallback>
+                          {generateInitials(group?.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <h3 className=" text-zinc-600 dark:text-zinc-100 font-bold text-ellipsis whitespace-nowrap overflow-hidden">
+                        {group?.name}
+                      </h3>
+                    </div>
+                  </Card>
+                );
+              })}
+          </ul>
         )}
       </ScrollArea>
       <AnimatePresence>

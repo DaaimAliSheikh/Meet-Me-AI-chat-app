@@ -2,12 +2,14 @@ import { baseURL } from "@/baseURL";
 import RegisterForm from "@/components/RegisterForm";
 import api from "@/lib/api";
 import { useSocketStore, useUserStore } from "@/store";
-import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { io } from "socket.io-client";
 
 const RegisterPage = () => {
   const setUser = useUserStore((state) => state.setUser);
+  const [loading, setLoading] = useState(true);
   const { setSocket, setOnlineUsers } = useSocketStore((state) => ({
     setSocket: state.setSocket,
     setOnlineUsers: state.setOnlineUsers,
@@ -29,19 +31,31 @@ const RegisterPage = () => {
           }
         );
         setSocket(socket);
-      } catch (e) {}
+      } catch (e) {
+        console.log("User Not Logged In, Navigating to Register Page");
+      }
+      setLoading(false);
     })();
   }, []);
   return (
     <div className="p-1 max-w-[35rem]   w-full  flex flex-col  mx-auto mt-6">
-      <h2 className="text-xl p-1 py-2">Register</h2>
-      <RegisterForm />
-      <Link
-        to={"/login"}
-        className="text-sm text-muted-foreground text-center  underline my-4"
-      >
-        Already have an account? Sign In
-      </Link>
+      {loading ? (
+        <Loader2
+          size={40}
+          className="animate-spin mx-auto text-primary mt-40 "
+        />
+      ) : (
+        <>
+          <h2 className="text-xl p-1 py-2">Register</h2>
+          <RegisterForm />
+          <Link
+            to={"/login"}
+            className="text-sm text-muted-foreground text-center  underline my-4"
+          >
+            Already have an account? Sign In
+          </Link>
+        </>
+      )}
     </div>
   );
 };
